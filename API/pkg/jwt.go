@@ -14,7 +14,7 @@ type JWTManagerImpl struct {
 	secret string
 }
 
-func NewJWTManager(secret string) *JWTManagerImpl {
+func NewJWTManager(secret string) models.JWTManager {
 	return &JWTManagerImpl{secret: secret}
 }
 
@@ -29,8 +29,8 @@ func (j *JWTManagerImpl) Generate(user *models.User) (string, error) {
 	return token.SignedString([]byte(j.secret))
 }
 
-// Verify validates a JWT token and returns the claims.
-func (j *JWTManagerImpl) Verify(tokenStr string) (*models.AuthClaims, error) {
+// Validate validates a JWT token and returns the claims.
+func (j *JWTManagerImpl) Validate(tokenStr string) (*models.AuthClaims, error) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")

@@ -1,0 +1,10 @@
+all: false
+with-expecter: true
+
+packages:
+  github.com/vida-plus/api/models:
+    config:
+      all: true
+      dir: "mocks"
+      filename: "{{ .InterfaceName | snakecase }}_mocks.go"
+      mockname: "{{ .InterfaceName }}"

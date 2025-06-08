@@ -4,6 +4,7 @@ package main
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/vida-plus/api/internal/auth"
+	"github.com/vida-plus/api/internal/handlers"
 	"github.com/vida-plus/api/internal/middleware"
 	"github.com/vida-plus/api/internal/user"
 	"github.com/vida-plus/api/pkg"
@@ -12,9 +13,11 @@ import (
 func main() {
 	userService := user.NewUserService()
 	jwtManager := pkg.NewJWTManager("secret")
+	_ = handlers.GetValidator()
+
 	e := echo.New()
 	authService := auth.NewAuthService(userService, jwtManager)
-	authHandler := auth.NewAuthHandler(authService)
+	authHandler := handlers.NewAuthHandler(authService)
 
 	e.POST("/register", RegisterHandler(authHandler))
 	e.POST("/login", LoginHandler(authHandler))
@@ -29,13 +32,13 @@ func ProtectedHandler(c echo.Context) error {
 	return c.JSON(200, map[string]interface{}{"userID": userID, "email": email})
 }
 
-func RegisterHandler(authHandler *auth.AuthHandler) echo.HandlerFunc {
+func RegisterHandler(authHandler *handlers.AuthHandler) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return authHandler.Register(c)
 	}
 }
 
-func LoginHandler(authHandler *auth.AuthHandler) echo.HandlerFunc {
+func LoginHandler(authHandler *handlers.AuthHandler) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return authHandler.Login(c)
 	}

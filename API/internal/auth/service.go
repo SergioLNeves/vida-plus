@@ -3,50 +3,92 @@ package auth
 
 import (
 	"context"
-	"errors"
+	"log/slog"
 
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/vida-plus/api/models"
+	"github.com/vida-plus/api/pkg"
 )
 
+// AuthServiceImpl implements AuthService interface.
 type AuthServiceImpl struct {
-	userStore UserStore
-	jwt       JWTManager
+	userStore models.UserStore
+	jwt       models.JWTManager
 }
 
-// UserStore abstracts user persistence.
-type UserStore interface {
-	CreateUser(ctx context.Context, user *models.User) error
-	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
-}
-
-// JWTManager abstracts JWT operations.
-type JWTManager interface {
-	Generate(user *models.User) (string, error)
-	Verify(token string) (*models.AuthClaims, error)
-}
-
-func NewAuthService(userStore UserStore, jwt JWTManager) AuthService {
+func NewAuthService(userStore models.UserStore, jwt models.JWTManager) models.AuthService {
 	return &AuthServiceImpl{userStore: userStore, jwt: jwt}
 }
 
 func (a *AuthServiceImpl) Register(ctx context.Context, email, password string) (*models.User, error) {
-	// TODO: hash password
-	user := &models.User{Email: email, Password: password}
-	if err := a.userStore.CreateUser(ctx, user); err != nil {
-		return nil, err
+	logger := slog.With(
+		slog.String("service", "AuthService"),
+		slog.String("method", "Register"),
+		slog.String("email", email),
+	)
+
+	// Check if user already exists
+	existingUser, err := a.userStore.GetByEmail(ctx, email)
+	if err != nil {
+		logger.Error("error checking existing user", slog.Any("error", err))
+		return nil, models.NewInternalError("error checking user existence")
 	}
+	if existingUser != nil {
+		logger.Info("attempt to register existing user")
+		return nil, models.NewConflictError("user already exists")
+	}
+
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		logger.Error("error hashing password", slog.Any("error", err))
+		return nil, models.NewInternalError("error processing password")
+	}
+
+	user := &models.User{
+		ID:       pkg.GenerateID(),
+		Email:    email,
+		Password: string(hashedPassword),
+	}
+
+	if err := a.userStore.Create(ctx, user); err != nil {
+		logger.Error("error creating user", slog.Any("error", err))
+		return nil, models.NewInternalError("error creating user")
+	}
+
+	logger.Info("user registered successfully", slog.String("userID", user.ID))
 	return user, nil
 }
 
 func (a *AuthServiceImpl) Login(ctx context.Context, email, password string) (string, error) {
-	user, err := a.userStore.GetUserByEmail(ctx, email)
-	if err != nil || user == nil {
-		return "", errors.New("invalid credentials")
+	logger := slog.With(
+		slog.String("service", "AuthService"),
+		slog.String("method", "Login"),
+		slog.String("email", email),
+	)
+
+	user, err := a.userStore.GetByEmail(ctx, email)
+	if err != nil {
+		logger.Error("error fetching user", slog.Any("error", err))
+		return "", models.NewInternalError("error processing login")
 	}
-	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
-		return "", errors.New("invalid credentials")
+	if user == nil {
+		logger.Info("login attempt with non-existent user")
+		return "", models.NewUnauthorizedError("invalid credentials")
 	}
-	return a.jwt.Generate(user)
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		logger.Info("login attempt with invalid password")
+		return "", models.NewUnauthorizedError("invalid credentials")
+	}
+
+	token, err := a.jwt.Generate(user)
+	if err != nil {
+		logger.Error("error generating token", slog.Any("error", err))
+		return "", models.NewInternalError("error generating authentication token")
+	}
+
+	logger.Info("user logged in successfully", slog.String("userID", user.ID))
+	return token, nil
 }
