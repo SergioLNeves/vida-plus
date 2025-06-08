@@ -9,6 +9,20 @@ import (
 	"github.com/vida-plus/api/pkg"
 )
 
+func main() {
+	userService := user.NewUserService()
+	jwtManager := pkg.NewJWTManager("secret")
+	e := echo.New()
+	authService := auth.NewAuthService(userService, jwtManager)
+	authHandler := auth.NewAuthHandler(authService)
+
+	e.POST("/register", RegisterHandler(authHandler))
+	e.POST("/login", LoginHandler(authHandler))
+	e.GET("/protected", ProtectedHandler, middleware.JWTMiddleware(jwtManager))
+
+	e.Logger.Fatal(e.Start(":8080"))
+}
+
 func ProtectedHandler(c echo.Context) error {
 	userID := c.Get("userID")
 	email := c.Get("email")
@@ -25,18 +39,4 @@ func LoginHandler(authHandler *auth.AuthHandler) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return authHandler.Login(c)
 	}
-}
-
-func main() {
-	userService := user.NewUserService()
-	jwtManager := pkg.NewJWTManager("secret")
-	e := echo.New()
-	authService := auth.NewAuthService(userService, jwtManager)
-	authHandler := auth.NewAuthHandler(authService)
-
-	e.POST("/register", RegisterHandler(authHandler))
-	e.POST("/login", LoginHandler(authHandler))
-	e.GET("/protected", ProtectedHandler, middleware.JWTMiddleware(jwtManager))
-
-	e.Logger.Fatal(e.Start(":8080"))
 }
