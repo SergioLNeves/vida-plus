@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/vida-plus/api/models"
+	"github.com/vida-plus/api/internal/domain"
 )
 
 // TestCoreIntegration tests the core functionality: authentication with user differentiation
@@ -26,24 +26,24 @@ func TestCoreIntegration(t *testing.T) {
 		// Test different user types
 		userTypes := []struct {
 			name     string
-			userType models.UserType
+			userType domain.UserType
 			email    string
 		}{
-			{"Patient", models.UserTypePatient, "patient@test.com"},
-			{"Doctor", models.UserTypeDoctor, "doctor@test.com"},
-			{"Admin", models.UserTypeAdmin, "admin@test.com"},
+			{"Patient", domain.UserTypePatient, "patient@test.com"},
+			{"Doctor", domain.UserTypeDoctor, "doctor@test.com"},
+			{"Admin", domain.UserTypeAdmin, "admin@test.com"},
 		}
 
-		tokens := make(map[models.UserType]string)
+		tokens := make(map[domain.UserType]string)
 
 		// Step 1: Register all user types
 		for _, user := range userTypes {
 			t.Run("Register_"+user.name, func(t *testing.T) {
-				registerReq := models.RegisterRequest{
+				registerReq := domain.RegisterRequest{
 					Email:    user.email,
 					Password: "password123",
 					Type:     user.userType,
-					Profile: models.UserProfile{
+					Profile: domain.UserProfile{
 						FirstName: user.name,
 						LastName:  "Test User",
 						Phone:     "123456789",
@@ -58,7 +58,7 @@ func TestCoreIntegration(t *testing.T) {
 				app.Echo.ServeHTTP(rec, req)
 				assert.Equal(t, http.StatusCreated, rec.Code)
 
-				var registerResp models.RegisterResponse
+				var registerResp domain.RegisterResponse
 				err := json.Unmarshal(rec.Body.Bytes(), &registerResp)
 				require.NoError(t, err)
 				assert.Equal(t, user.userType, registerResp.Type)
@@ -69,7 +69,7 @@ func TestCoreIntegration(t *testing.T) {
 		// Step 2: Login all users and get tokens
 		for _, user := range userTypes {
 			t.Run("Login_"+user.name, func(t *testing.T) {
-				loginReq := models.LoginRequest{
+				loginReq := domain.LoginRequest{
 					Email:    user.email,
 					Password: "password123",
 				}
@@ -82,7 +82,7 @@ func TestCoreIntegration(t *testing.T) {
 				app.Echo.ServeHTTP(rec, req)
 				assert.Equal(t, http.StatusOK, rec.Code)
 
-				var loginResp models.LoginResponse
+				var loginResp domain.LoginResponse
 				err := json.Unmarshal(rec.Body.Bytes(), &loginResp)
 				require.NoError(t, err)
 				assert.NotEmpty(t, loginResp.Token)

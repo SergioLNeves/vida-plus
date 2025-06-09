@@ -1,23 +1,23 @@
-// Package user provides user management services.
-package user
+// Package service provides business logic services.
+package service
 
 import (
 	"context"
 	"log/slog"
 
-	"github.com/vida-plus/api/models"
+	"github.com/vida-plus/api/internal/domain"
 )
 
 // UserServiceImpl implements UserStore interface.
 type UserServiceImpl struct {
-	repo models.UserRepository
+	repo domain.UserRepository
 }
 
-func NewUserService(repo models.UserRepository) models.UserStore {
+func NewUserService(repo domain.UserRepository) domain.UserStore {
 	return &UserServiceImpl{repo: repo}
 }
 
-func (u *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*models.User, error) {
+func (u *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	logger := slog.With(
 		slog.String("service", "UserService"),
 		slog.String("method", "GetByEmail"),
@@ -39,7 +39,7 @@ func (u *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*models
 	return user, nil
 }
 
-func (u *UserServiceImpl) Create(ctx context.Context, user *models.User) error {
+func (u *UserServiceImpl) Create(ctx context.Context, user *domain.User) error {
 	logger := slog.With(
 		slog.String("service", "UserService"),
 		slog.String("method", "Create"),
@@ -56,7 +56,7 @@ func (u *UserServiceImpl) Create(ctx context.Context, user *models.User) error {
 	return nil
 }
 
-func (u *UserServiceImpl) GetByID(ctx context.Context, id string) (*models.User, error) {
+func (u *UserServiceImpl) GetByID(ctx context.Context, id string) (*domain.User, error) {
 	logger := slog.With(
 		slog.String("service", "UserService"),
 		slog.String("method", "GetByID"),
@@ -66,7 +66,7 @@ func (u *UserServiceImpl) GetByID(ctx context.Context, id string) (*models.User,
 	user, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		logger.Error("failed to get user by ID", slog.Any("error", err))
-		return nil, models.NewInternalError("failed to get user by ID")
+		return nil, domain.NewInternalError("failed to get user by ID")
 	}
 
 	logger.Info("user found successfully")

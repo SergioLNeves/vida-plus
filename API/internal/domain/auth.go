@@ -1,5 +1,5 @@
 // Package models contains domain models for authentication and authorization.
-package models
+package domain
 
 import (
 	"context"

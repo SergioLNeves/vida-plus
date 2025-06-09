@@ -1,5 +1,5 @@
 // Package models contains domain models for authentication and user management.
-package models
+package domain
 
 import (
 	"context"
@@ -10,11 +10,11 @@ import (
 type UserType string
 
 const (
-	UserTypePatient      UserType = "patient"      // Paciente
-	UserTypeDoctor       UserType = "doctor"       // Médico
-	UserTypeNurse        UserType = "nurse"        // Enfermeiro
-	UserTypeAdmin        UserType = "admin"        // Administrador
-	UserTypeReceptionist UserType = "receptionist" // Recepcionista
+	UserTypePatient      UserType = "patient"      // Patient
+	UserTypeDoctor       UserType = "doctor"       // Doctor
+	UserTypeNurse        UserType = "nurse"        // Nurse
+	UserTypeAdmin        UserType = "admin"        // Administrator
+	UserTypeReceptionist UserType = "receptionist" // Receptionist
 )
 
 // UserStatus represents the status of a user account
@@ -44,12 +44,12 @@ type UserProfile struct {
 	FirstName   string `bson:"first_name" json:"first_name"`
 	LastName    string `bson:"last_name" json:"last_name"`
 	Phone       string `bson:"phone" json:"phone"`
-	DateOfBirth string `bson:"date_of_birth,omitempty" json:"date_of_birth,omitempty"` // Para pacientes
+	DateOfBirth string `bson:"date_of_birth,omitempty" json:"date_of_birth,omitempty"` // For patients
 	CPF         string `bson:"cpf,omitempty" json:"cpf,omitempty"`
-	CRM         string `bson:"crm,omitempty" json:"crm,omitempty"`               // Para médicos
-	COREN       string `bson:"coren,omitempty" json:"coren,omitempty"`           // Para enfermeiros
-	Speciality  string `bson:"speciality,omitempty" json:"speciality,omitempty"` // Para médicos
-	Department  string `bson:"department,omitempty" json:"department,omitempty"` // Para funcionários
+	CRM         string `bson:"crm,omitempty" json:"crm,omitempty"`               // For doctors
+	COREN       string `bson:"coren,omitempty" json:"coren,omitempty"`           // For nurses
+	Speciality  string `bson:"speciality,omitempty" json:"speciality,omitempty"` // For doctors
+	Department  string `bson:"department,omitempty" json:"department,omitempty"` // For staff
 }
 
 // HasPermission checks if user has permission for a specific action

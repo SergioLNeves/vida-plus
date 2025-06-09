@@ -1,12 +1,12 @@
-// Package handlers contains HTTP handlers for the API.
-package handlers
+// Package handler contains HTTP handlers for the API.
+package handler
 
 import (
 	"log/slog"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/vida-plus/api/models"
+	"github.com/vida-plus/api/internal/domain"
 )
 
 // ProtectedHandler struct holds handler dependencies
@@ -25,8 +25,8 @@ func NewProtectedHandler() *ProtectedHandler {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} map[string]string "Protected information"
-// @Failure 401 {object} models.APIError "Unauthorized"
-// @Failure 500 {object} models.APIError "Internal server error"
+// @Failure 401 {object} domain.APIError "Unauthorized"
+// @Failure 500 {object} domain.APIError "Internal server error"
 // @Router /protected [get]
 func (h *ProtectedHandler) GetProtectedInfo(c echo.Context) error {
 	logger := slog.With(
@@ -34,10 +34,10 @@ func (h *ProtectedHandler) GetProtectedInfo(c echo.Context) error {
 		slog.String("func", "GetProtectedInfo"),
 	)
 
-	claims, err := models.GetAuthClaims(c.Get("claims"))
+	claims, err := domain.GetAuthClaims(c.Get("claims"))
 	if err != nil {
 		logger.Error("missing or invalid claims in context", slog.Any("error", err))
-		return c.JSON(http.StatusUnauthorized, models.NewAPIError(http.StatusUnauthorized, err.Error()))
+		return c.JSON(http.StatusUnauthorized, domain.NewAPIError(http.StatusUnauthorized, err.Error()))
 	}
 
 	logger.Info("protected info accessed",

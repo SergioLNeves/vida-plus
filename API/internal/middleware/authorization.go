@@ -4,16 +4,16 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/vida-plus/api/models"
+	"github.com/vida-plus/api/internal/domain"
 )
 
 // RequirePermission creates a middleware that checks if user has specific permission
 func RequirePermission(permission string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			claims, err := models.GetAuthClaims(c.Get("claims"))
+			claims, err := domain.GetAuthClaims(c.Get("claims"))
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, models.NewAPIError(
+				return c.JSON(http.StatusUnauthorized, domain.NewAPIError(
 					http.StatusUnauthorized,
 					"authentication required",
 				))
@@ -21,10 +21,10 @@ func RequirePermission(permission string) echo.MiddlewareFunc {
 
 			// Buscar o usuário completo para verificar permissões
 			// Por simplicidade, vamos usar apenas o tipo do usuário do token
-			user := &models.User{Type: claims.UserType}
+			user := &domain.User{Type: claims.UserType}
 
 			if !user.HasPermission(permission) {
-				return c.JSON(http.StatusForbidden, models.NewAPIError(
+				return c.JSON(http.StatusForbidden, domain.NewAPIError(
 					http.StatusForbidden,
 					"insufficient permissions",
 				))
@@ -36,12 +36,12 @@ func RequirePermission(permission string) echo.MiddlewareFunc {
 }
 
 // RequireUserType creates a middleware that checks if user is of specific type
-func RequireUserType(userTypes ...models.UserType) echo.MiddlewareFunc {
+func RequireUserType(userTypes ...domain.UserType) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			claims, err := models.GetAuthClaims(c.Get("claims"))
+			claims, err := domain.GetAuthClaims(c.Get("claims"))
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, models.NewAPIError(
+				return c.JSON(http.StatusUnauthorized, domain.NewAPIError(
 					http.StatusUnauthorized,
 					"authentication required",
 				))
@@ -54,7 +54,7 @@ func RequireUserType(userTypes ...models.UserType) echo.MiddlewareFunc {
 				}
 			}
 
-			return c.JSON(http.StatusForbidden, models.NewAPIError(
+			return c.JSON(http.StatusForbidden, domain.NewAPIError(
 				http.StatusForbidden,
 				"access denied for user type",
 			))
@@ -64,28 +64,28 @@ func RequireUserType(userTypes ...models.UserType) echo.MiddlewareFunc {
 
 // RequireAdmin creates a middleware that only allows admin users
 func RequireAdmin() echo.MiddlewareFunc {
-	return RequireUserType(models.UserTypeAdmin)
+	return RequireUserType(domain.UserTypeAdmin)
 }
 
 // RequireMedicalStaff creates a middleware that allows doctors and nurses
 func RequireMedicalStaff() echo.MiddlewareFunc {
-	return RequireUserType(models.UserTypeDoctor, models.UserTypeNurse)
+	return RequireUserType(domain.UserTypeDoctor, domain.UserTypeNurse)
 }
 
 // RequireRole creates a middleware that checks if user has the required role
-func RequireRole(requiredRole models.UserType) echo.MiddlewareFunc {
+func RequireRole(requiredRole domain.UserType) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			claims, err := models.GetAuthClaims(c.Get("claims"))
+			claims, err := domain.GetAuthClaims(c.Get("claims"))
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, models.NewAPIError(
+				return c.JSON(http.StatusUnauthorized, domain.NewAPIError(
 					http.StatusUnauthorized,
 					"authentication required",
 				))
 			}
 
 			if claims.UserType != requiredRole {
-				return c.JSON(http.StatusForbidden, models.NewAPIError(
+				return c.JSON(http.StatusForbidden, domain.NewAPIError(
 					http.StatusForbidden,
 					"insufficient role permissions",
 				))

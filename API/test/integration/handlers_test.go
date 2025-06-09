@@ -10,8 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/vida-plus/api/models"
+	"github.com/vida-plus/api/internal/domain"
 )
 
 // TestHandlersIntegration tests all handler functionality with complete scenarios
@@ -24,11 +23,11 @@ func TestHandlersIntegration(t *testing.T) {
 
 	t.Run("Basic Patient Registration and Login", func(t *testing.T) {
 		// Step 1: Register a patient
-		patientReq := models.RegisterRequest{
+		patientReq := domain.RegisterRequest{
 			Email:    "patient.journey@test.com",
 			Password: "password123",
-			Type:     models.UserTypePatient,
-			Profile: models.UserProfile{
+			Type:     domain.UserTypePatient,
+			Profile: domain.UserProfile{
 				FirstName:   "João",
 				LastName:    "Silva",
 				Phone:       "11999999999",
@@ -45,13 +44,13 @@ func TestHandlersIntegration(t *testing.T) {
 		app.Echo.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
-		var registerResp models.RegisterResponse
+		var registerResp domain.RegisterResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &registerResp)
 		require.NoError(t, err)
-		assert.Equal(t, models.UserTypePatient, registerResp.Type)
+		assert.Equal(t, domain.UserTypePatient, registerResp.Type)
 
 		// Step 2: Login as patient
-		loginReq := models.LoginRequest{
+		loginReq := domain.LoginRequest{
 			Email:    "patient.journey@test.com",
 			Password: "password123",
 		}
@@ -64,7 +63,7 @@ func TestHandlersIntegration(t *testing.T) {
 		app.Echo.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var loginResp models.LoginResponse
+		var loginResp domain.LoginResponse
 		err = json.Unmarshal(rec.Body.Bytes(), &loginResp)
 		require.NoError(t, err)
 		patientToken := loginResp.Token
@@ -80,22 +79,22 @@ func TestHandlersIntegration(t *testing.T) {
 		var profileResp struct {
 			UserID  string          `json:"user_id"`
 			Email   string          `json:"email"`
-			Type    models.UserType `json:"type"`
+			Type    domain.UserType `json:"type"`
 			Message string          `json:"message"`
 		}
 		err = json.Unmarshal(rec.Body.Bytes(), &profileResp)
 		require.NoError(t, err)
-		assert.Equal(t, models.UserTypePatient, profileResp.Type)
+		assert.Equal(t, domain.UserTypePatient, profileResp.Type)
 		assert.Equal(t, "patient.journey@test.com", profileResp.Email)
 	})
 
 	t.Run("Basic Doctor Registration and Login", func(t *testing.T) {
 		// Step 1: Register a doctor
-		doctorReq := models.RegisterRequest{
+		doctorReq := domain.RegisterRequest{
 			Email:    "doctor.journey@test.com",
 			Password: "password123",
-			Type:     models.UserTypeDoctor,
-			Profile: models.UserProfile{
+			Type:     domain.UserTypeDoctor,
+			Profile: domain.UserProfile{
 				FirstName:  "Maria",
 				LastName:   "Santos",
 				Phone:      "11888888888",
@@ -113,7 +112,7 @@ func TestHandlersIntegration(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
 		// Step 2: Login as doctor
-		loginReq := models.LoginRequest{
+		loginReq := domain.LoginRequest{
 			Email:    "doctor.journey@test.com",
 			Password: "password123",
 		}
@@ -152,11 +151,11 @@ func TestHandlersIntegration(t *testing.T) {
 
 	t.Run("Complete Admin Journey", func(t *testing.T) {
 		// Step 1: First create a patient and doctor for the admin to manage
-		patientReq := models.RegisterRequest{
+		patientReq := domain.RegisterRequest{
 			Email:    "patient.for.admin@test.com",
 			Password: "password123",
-			Type:     models.UserTypePatient,
-			Profile: models.UserProfile{
+			Type:     domain.UserTypePatient,
+			Profile: domain.UserProfile{
 				FirstName: "Patient",
 				LastName:  "For Admin",
 				Phone:     "11999999999",
@@ -171,11 +170,11 @@ func TestHandlersIntegration(t *testing.T) {
 		app.Echo.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
-		doctorReq := models.RegisterRequest{
+		doctorReq := domain.RegisterRequest{
 			Email:    "doctor.for.admin@test.com",
 			Password: "password123",
-			Type:     models.UserTypeDoctor,
-			Profile: models.UserProfile{
+			Type:     domain.UserTypeDoctor,
+			Profile: domain.UserProfile{
 				FirstName: "Doctor",
 				LastName:  "For Admin",
 				Phone:     "11888888888",
@@ -191,11 +190,11 @@ func TestHandlersIntegration(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
 		// Step 2: Register an admin
-		adminReq := models.RegisterRequest{
+		adminReq := domain.RegisterRequest{
 			Email:    "admin.journey@test.com",
 			Password: "password123",
-			Type:     models.UserTypeAdmin,
-			Profile: models.UserProfile{
+			Type:     domain.UserTypeAdmin,
+			Profile: domain.UserProfile{
 				FirstName: "Admin",
 				LastName:  "User",
 				Phone:     "11777777777",
@@ -211,7 +210,7 @@ func TestHandlersIntegration(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
 		// Step 3: Login as admin
-		loginReq := models.LoginRequest{
+		loginReq := domain.LoginRequest{
 			Email:    "admin.journey@test.com",
 			Password: "password123",
 		}
@@ -240,7 +239,7 @@ func TestHandlersIntegration(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var usersResp struct {
-			Users      []models.User `json:"users"`
+			Users      []domain.User `json:"users"`
 			TotalCount int           `json:"total_count"`
 		}
 		err = json.Unmarshal(rec.Body.Bytes(), &usersResp)
@@ -271,10 +270,10 @@ func TestHandlersIntegration(t *testing.T) {
 
 	t.Run("Error Handling and Validation", func(t *testing.T) {
 		// Test invalid registration data
-		invalidReq := models.RegisterRequest{
+		invalidReq := domain.RegisterRequest{
 			Email:    "invalid-email",
 			Password: "123", // too short
-			Type:     models.UserType("invalid_type"),
+			Type:     domain.UserType("invalid_type"),
 		}
 
 		body, _ := json.Marshal(invalidReq)
@@ -286,7 +285,7 @@ func TestHandlersIntegration(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
 		// Test invalid login
-		invalidLogin := models.LoginRequest{
+		invalidLogin := domain.LoginRequest{
 			Email:    "nonexistent@test.com",
 			Password: "wrongpassword",
 		}
@@ -338,22 +337,22 @@ func TestHandlersIntegration(t *testing.T) {
 		// Register multiple users for interaction testing
 		users := []struct {
 			email    string
-			userType models.UserType
+			userType domain.UserType
 			name     string
 		}{
-			{"nurse1@test.com", models.UserTypeNurse, "Ana"},
-			{"receptionist1@test.com", models.UserTypeReceptionist, "Carlos"},
+			{"nurse1@test.com", domain.UserTypeNurse, "Ana"},
+			{"receptionist1@test.com", domain.UserTypeReceptionist, "Carlos"},
 		}
 
 		tokens := make(map[string]string)
 
 		for _, user := range users {
 			// Register user
-			regReq := models.RegisterRequest{
+			regReq := domain.RegisterRequest{
 				Email:    user.email,
 				Password: "password123",
 				Type:     user.userType,
-				Profile: models.UserProfile{
+				Profile: domain.UserProfile{
 					FirstName: user.name,
 					LastName:  "Test",
 					Phone:     "11666666666",
@@ -369,7 +368,7 @@ func TestHandlersIntegration(t *testing.T) {
 			assert.Equal(t, http.StatusCreated, rec.Code)
 
 			// Login user
-			loginReq := models.LoginRequest{
+			loginReq := domain.LoginRequest{
 				Email:    user.email,
 				Password: "password123",
 			}
@@ -391,7 +390,7 @@ func TestHandlersIntegration(t *testing.T) {
 		}
 
 		// Test nurse access patterns
-		nurseToken := tokens[string(models.UserTypeNurse)]
+		nurseToken := tokens[string(domain.UserTypeNurse)]
 
 		// Nurse should NOT have access to admin endpoints
 		req := httptest.NewRequest(http.MethodGet, "/v1/admin/users", nil)
@@ -402,7 +401,7 @@ func TestHandlersIntegration(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, rec.Code)
 
 		// Test receptionist access patterns
-		receptionistToken := tokens[string(models.UserTypeReceptionist)]
+		receptionistToken := tokens[string(domain.UserTypeReceptionist)]
 
 		// Receptionist should NOT have access to admin endpoints
 		req = httptest.NewRequest(http.MethodGet, "/v1/admin/users", nil)

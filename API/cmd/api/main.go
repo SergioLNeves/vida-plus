@@ -23,12 +23,11 @@ package main
 import (
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
-	"github.com/vida-plus/api/internal/auth"
-	"github.com/vida-plus/api/internal/handlers"
+	"github.com/vida-plus/api/internal/domain"
+	"github.com/vida-plus/api/internal/handler"
 	"github.com/vida-plus/api/internal/middleware"
 	"github.com/vida-plus/api/internal/repository"
-	"github.com/vida-plus/api/internal/user"
-	"github.com/vida-plus/api/models"
+	"github.com/vida-plus/api/internal/service"
 	"github.com/vida-plus/api/pkg"
 	"github.com/vida-plus/api/pkg/database"
 
@@ -46,7 +45,7 @@ func main() {
 
 	// Initialize other dependencies
 	jwtManager := pkg.NewJWTManager()
-	_ = handlers.GetValidator()
+	_ = handler.GetValidator()
 
 	e := echo.New()
 
@@ -54,7 +53,7 @@ func main() {
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	// Configure health check endpoint
-	healthHandler := handlers.NewHealthHandler(mongoClient)
+	healthHandler := handler.NewHealthHandler(mongoClient)
 	e.GET("/health", healthHandler.Check)
 
 	// Configure routes
@@ -65,10 +64,10 @@ func main() {
 	e.Logger.Fatal(e.Start(":8080"))
 }
 
-func configureAuthRoutes(e *echo.Echo, jwtManager models.JWTManager, userRepo models.UserRepository) {
-	userService := user.NewUserService(userRepo)
-	authService := auth.NewAuthService(userService, jwtManager)
-	authHandler := handlers.NewAuthHandler(authService)
+func configureAuthRoutes(e *echo.Echo, jwtManager domain.JWTManager, userRepo domain.UserRepository) {
+	userService := service.NewUserService(userRepo)
+	authService := service.NewAuthService(userService, jwtManager)
+	authHandler := handler.NewAuthHandler(authService)
 
 	// Configuração das rotas de autenticação
 	v1 := e.Group("/v1")
@@ -76,8 +75,8 @@ func configureAuthRoutes(e *echo.Echo, jwtManager models.JWTManager, userRepo mo
 	v1.POST("/auth/login", authHandler.Login)
 }
 
-func configureProtectedRoutes(e *echo.Echo, jwtManager models.JWTManager) {
-	protectedHandler := handlers.NewProtectedHandler()
+func configureProtectedRoutes(e *echo.Echo, jwtManager domain.JWTManager) {
+	protectedHandler := handler.NewProtectedHandler()
 
 	// Configuração das rotas protegidas (exemplo simples)
 	v1 := e.Group("/v1", middleware.JWTMiddleware(jwtManager))
@@ -85,9 +84,9 @@ func configureProtectedRoutes(e *echo.Echo, jwtManager models.JWTManager) {
 
 	// Endpoint simples para demonstrar diferenciação de usuários
 	v1.GET("/profile", func(c echo.Context) error {
-		claims, err := models.GetAuthClaims(c.Get("claims"))
+		claims, err := domain.GetAuthClaims(c.Get("claims"))
 		if err != nil {
-			return c.JSON(401, models.NewAPIError(401, err.Error()))
+			return c.JSON(401, domain.NewAPIError(401, err.Error()))
 		}
 
 		return c.JSON(200, map[string]interface{}{
@@ -99,14 +98,14 @@ func configureProtectedRoutes(e *echo.Echo, jwtManager models.JWTManager) {
 	})
 }
 
-func configureAdminRoutes(e *echo.Echo, jwtManager models.JWTManager, userRepo models.UserRepository) {
-	adminHandler := handlers.NewAdminHandler(userRepo)
+func configureAdminRoutes(e *echo.Echo, jwtManager domain.JWTManager, userRepo domain.UserRepository) {
+	adminHandler := handler.NewAdminHandler(userRepo)
 
 	// Configuração das rotas de admin (protegidas)
 	v1 := e.Group("/v1", middleware.JWTMiddleware(jwtManager))
 
 	// Rotas específicas para admin
-	adminGroup := v1.Group("/admin", middleware.RequireRole(models.UserTypeAdmin))
+	adminGroup := v1.Group("/admin", middleware.RequireRole(domain.UserTypeAdmin))
 	adminGroup.GET("/users", adminHandler.GetAllUsers)
 	adminGroup.GET("/stats", adminHandler.GetSystemStats)
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/vida-plus/api/models"
+	"github.com/vida-plus/api/internal/domain"
 )
 
 func TestAuthIntegration(t *testing.T) {
@@ -31,17 +31,17 @@ func TestAuthIntegration(t *testing.T) {
 		// Test data for different user types
 		testUsers := []struct {
 			name     string
-			userType models.UserType
+			userType domain.UserType
 			email    string
 			password string
-			profile  models.UserProfile
+			profile  domain.UserProfile
 		}{
 			{
 				name:     "Patient",
-				userType: models.UserTypePatient,
+				userType: domain.UserTypePatient,
 				email:    "patient@test.com",
 				password: "password123",
-				profile: models.UserProfile{
+				profile: domain.UserProfile{
 					FirstName:   "João",
 					LastName:    "Silva",
 					Phone:       "+55-11-99999-9999",
@@ -51,10 +51,10 @@ func TestAuthIntegration(t *testing.T) {
 			},
 			{
 				name:     "Doctor",
-				userType: models.UserTypeDoctor,
+				userType: domain.UserTypeDoctor,
 				email:    "doctor@test.com",
 				password: "password123",
-				profile: models.UserProfile{
+				profile: domain.UserProfile{
 					FirstName:  "Dr. Maria",
 					LastName:   "Santos",
 					Phone:      "+55-11-88888-8888",
@@ -65,10 +65,10 @@ func TestAuthIntegration(t *testing.T) {
 			},
 			{
 				name:     "Admin",
-				userType: models.UserTypeAdmin,
+				userType: domain.UserTypeAdmin,
 				email:    "admin@test.com",
 				password: "password123",
-				profile: models.UserProfile{
+				profile: domain.UserProfile{
 					FirstName:  "Admin",
 					LastName:   "Sistema",
 					Phone:      "+55-11-77777-7777",
@@ -80,7 +80,7 @@ func TestAuthIntegration(t *testing.T) {
 		for _, user := range testUsers {
 			t.Run("Register_"+user.name, func(t *testing.T) {
 				// Register user
-				registerReq := models.RegisterRequest{
+				registerReq := domain.RegisterRequest{
 					Email:    user.email,
 					Password: user.password,
 					Type:     user.userType,
@@ -98,7 +98,7 @@ func TestAuthIntegration(t *testing.T) {
 
 				assert.Equal(t, http.StatusCreated, rec.Code)
 
-				var registerResp models.RegisterResponse
+				var registerResp domain.RegisterResponse
 				err = json.Unmarshal(rec.Body.Bytes(), &registerResp)
 				require.NoError(t, err)
 
@@ -110,7 +110,7 @@ func TestAuthIntegration(t *testing.T) {
 
 			t.Run("Login_"+user.name, func(t *testing.T) {
 				// Login user
-				loginReq := models.LoginRequest{
+				loginReq := domain.LoginRequest{
 					Email:    user.email,
 					Password: user.password,
 				}
@@ -126,7 +126,7 @@ func TestAuthIntegration(t *testing.T) {
 
 				assert.Equal(t, http.StatusOK, rec.Code)
 
-				var loginResp models.LoginResponse
+				var loginResp domain.LoginResponse
 				err = json.Unmarshal(rec.Body.Bytes(), &loginResp)
 				require.NoError(t, err)
 
@@ -145,11 +145,11 @@ func TestAuthIntegration(t *testing.T) {
 		// Clean database before test
 		tc.CleanDatabase(ctx, t)
 
-		registerReq := models.RegisterRequest{
+		registerReq := domain.RegisterRequest{
 			Email:    "duplicate@test.com",
 			Password: "password123",
-			Type:     models.UserTypePatient,
-			Profile: models.UserProfile{
+			Type:     domain.UserTypePatient,
+			Profile: domain.UserProfile{
 				FirstName: "Test",
 				LastName:  "User",
 				Phone:     "+55-11-99999-9999",
@@ -181,11 +181,11 @@ func TestAuthIntegration(t *testing.T) {
 		tc.CleanDatabase(ctx, t)
 
 		// Register a user first
-		registerReq := models.RegisterRequest{
+		registerReq := domain.RegisterRequest{
 			Email:    "valid@test.com",
 			Password: "validpassword",
-			Type:     models.UserTypePatient,
-			Profile: models.UserProfile{
+			Type:     domain.UserTypePatient,
+			Profile: domain.UserProfile{
 				FirstName: "Valid",
 				LastName:  "User",
 				Phone:     "+55-11-99999-9999",
@@ -203,7 +203,7 @@ func TestAuthIntegration(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
 		// Try to login with wrong password
-		loginReq := models.LoginRequest{
+		loginReq := domain.LoginRequest{
 			Email:    "valid@test.com",
 			Password: "wrongpassword",
 		}

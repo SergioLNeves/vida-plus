@@ -14,12 +14,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/vida-plus/api/internal/auth"
-	"github.com/vida-plus/api/internal/handlers"
+	"github.com/vida-plus/api/internal/domain"
+	"github.com/vida-plus/api/internal/handler"
 	"github.com/vida-plus/api/internal/middleware"
 	"github.com/vida-plus/api/internal/repository"
-	"github.com/vida-plus/api/internal/user"
-	"github.com/vida-plus/api/models"
+	"github.com/vida-plus/api/internal/service"
 	"github.com/vida-plus/api/pkg"
 )
 
@@ -35,12 +34,12 @@ type TestContainer struct {
 // TestApp holds the application dependencies for testing
 type TestApp struct {
 	Echo             *echo.Echo
-	UserRepo         models.UserRepository
-	AuthService      models.AuthService
-	JWTManager       models.JWTManager
-	AuthHandler      *handlers.AuthHandler
-	ProtectedHandler *handlers.ProtectedHandler
-	HealthHandler    *handlers.HealthHandler
+	UserRepo         domain.UserRepository
+	AuthService      domain.AuthService
+	JWTManager       domain.JWTManager
+	AuthHandler      *handler.AuthHandler
+	ProtectedHandler *handler.ProtectedHandler
+	HealthHandler    *handler.HealthHandler
 }
 
 // SetupMongoDB creates a MongoDB test container
@@ -120,13 +119,13 @@ func SetupTestApp(tc *TestContainer) *TestApp {
 
 	// Initialize services
 	jwtManager := pkg.NewJWTManager()
-	userService := user.NewUserService(userRepo)
-	authService := auth.NewAuthService(userService, jwtManager)
+	userService := service.NewUserService(userRepo)
+	authService := service.NewAuthService(userService, jwtManager)
 
 	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(authService)
-	protectedHandler := handlers.NewProtectedHandler()
-	healthHandler := handlers.NewHealthHandler(tc.MongoClient)
+	authHandler := handler.NewAuthHandler(authService)
+	protectedHandler := handler.NewProtectedHandler()
+	healthHandler := handler.NewHealthHandler(tc.MongoClient)
 
 	// Setup Echo app
 	e := echo.New()
@@ -146,8 +145,8 @@ func SetupTestApp(tc *TestContainer) *TestApp {
 }
 
 // setupTestRoutes configures all routes for testing
-func setupTestRoutes(e *echo.Echo, jwtManager models.JWTManager, userRepo models.UserRepository, authHandler *handlers.AuthHandler,
-	protectedHandler *handlers.ProtectedHandler, healthHandler *handlers.HealthHandler) {
+func setupTestRoutes(e *echo.Echo, jwtManager domain.JWTManager, userRepo domain.UserRepository, authHandler *handler.AuthHandler,
+	protectedHandler *handler.ProtectedHandler, healthHandler *handler.HealthHandler) {
 
 	// Health check
 	e.GET("/health", healthHandler.Check)
@@ -163,9 +162,9 @@ func setupTestRoutes(e *echo.Echo, jwtManager models.JWTManager, userRepo models
 
 	// Simple profile endpoint to demonstrate user differentiation
 	protected.GET("/profile", func(c echo.Context) error {
-		claims, err := models.GetAuthClaims(c.Get("claims"))
+		claims, err := domain.GetAuthClaims(c.Get("claims"))
 		if err != nil {
-			return c.JSON(401, models.NewAPIError(401, err.Error()))
+			return c.JSON(401, domain.NewAPIError(401, err.Error()))
 		}
 
 		return c.JSON(200, map[string]interface{}{
@@ -177,8 +176,8 @@ func setupTestRoutes(e *echo.Echo, jwtManager models.JWTManager, userRepo models
 	})
 
 	// Admin routes (require Admin role) - using real AdminHandler
-	adminHandler := handlers.NewAdminHandler(userRepo)
-	adminGroup := protected.Group("/admin", middleware.RequireRole(models.UserTypeAdmin))
+	adminHandler := handler.NewAdminHandler(userRepo)
+	adminGroup := protected.Group("/admin", middleware.RequireRole(domain.UserTypeAdmin))
 	adminGroup.GET("/users", adminHandler.GetAllUsers)
 	adminGroup.GET("/stats", adminHandler.GetSystemStats)
 }

@@ -50,13 +50,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/models.APIError"
+                            "$ref": "#/definitions/domain.APIError"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/models.APIError"
+                            "$ref": "#/definitions/domain.APIError"
                         }
                     }
                 }
@@ -88,13 +88,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/models.APIError"
+                            "$ref": "#/definitions/domain.APIError"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/models.APIError"
+                            "$ref": "#/definitions/domain.APIError"
                         }
                     }
                 }
@@ -120,7 +120,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.LoginRequest"
+                            "$ref": "#/definitions/domain.LoginRequest"
                         }
                     }
                 ],
@@ -128,25 +128,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Login successful",
                         "schema": {
-                            "$ref": "#/definitions/models.LoginResponse"
+                            "$ref": "#/definitions/domain.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Bad request",
                         "schema": {
-                            "$ref": "#/definitions/models.APIError"
+                            "$ref": "#/definitions/domain.APIError"
                         }
                     },
                     "401": {
                         "description": "Invalid credentials",
                         "schema": {
-                            "$ref": "#/definitions/models.APIError"
+                            "$ref": "#/definitions/domain.APIError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/models.APIError"
+                            "$ref": "#/definitions/domain.APIError"
                         }
                     }
                 }
@@ -172,7 +172,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.RegisterRequest"
+                            "$ref": "#/definitions/domain.RegisterRequest"
                         }
                     }
                 ],
@@ -180,25 +180,25 @@ const docTemplate = `{
                     "201": {
                         "description": "User registered successfully",
                         "schema": {
-                            "$ref": "#/definitions/models.RegisterResponse"
+                            "$ref": "#/definitions/domain.RegisterResponse"
                         }
                     },
                     "400": {
                         "description": "Bad request",
                         "schema": {
-                            "$ref": "#/definitions/models.APIError"
+                            "$ref": "#/definitions/domain.APIError"
                         }
                     },
                     "409": {
                         "description": "User already exists",
                         "schema": {
-                            "$ref": "#/definitions/models.APIError"
+                            "$ref": "#/definitions/domain.APIError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/models.APIError"
+                            "$ref": "#/definitions/domain.APIError"
                         }
                     }
                 }
@@ -227,7 +227,7 @@ const docTemplate = `{
                     "503": {
                         "description": "Service unavailable",
                         "schema": {
-                            "$ref": "#/definitions/models.APIError"
+                            "$ref": "#/definitions/domain.APIError"
                         }
                     }
                 }
@@ -261,13 +261,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/models.APIError"
+                            "$ref": "#/definitions/domain.APIError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/models.APIError"
+                            "$ref": "#/definitions/domain.APIError"
                         }
                     }
                 }
@@ -275,7 +275,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "models.APIError": {
+        "domain.APIError": {
             "type": "object",
             "properties": {
                 "details": {},
@@ -290,7 +290,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.LoginRequest": {
+        "domain.LoginRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -308,7 +308,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.LoginResponse": {
+        "domain.LoginResponse": {
             "type": "object",
             "properties": {
                 "token": {
@@ -317,7 +317,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.RegisterRequest": {
+        "domain.RegisterRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -337,19 +337,19 @@ const docTemplate = `{
                     "example": "mypassword123"
                 },
                 "profile": {
-                    "$ref": "#/definitions/models.UserProfile"
+                    "$ref": "#/definitions/domain.UserProfile"
                 },
                 "type": {
                     "allOf": [
                         {
-                            "$ref": "#/definitions/models.UserType"
+                            "$ref": "#/definitions/domain.UserType"
                         }
                     ],
                     "example": "patient"
                 }
             }
         },
-        "models.RegisterResponse": {
+        "domain.RegisterResponse": {
             "type": "object",
             "properties": {
                 "email": {
@@ -361,19 +361,19 @@ const docTemplate = `{
                     "example": "user123"
                 },
                 "profile": {
-                    "$ref": "#/definitions/models.UserProfile"
+                    "$ref": "#/definitions/domain.UserProfile"
                 },
                 "type": {
                     "allOf": [
                         {
-                            "$ref": "#/definitions/models.UserType"
+                            "$ref": "#/definitions/domain.UserType"
                         }
                     ],
                     "example": "patient"
                 }
             }
         },
-        "models.UserProfile": {
+        "domain.UserProfile": {
             "type": "object",
             "properties": {
                 "coren": {
@@ -410,7 +410,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.UserType": {
+        "domain.UserType": {
             "type": "string",
             "enum": [
                 "patient",

@@ -11,8 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/vida-plus/api/models"
+	"github.com/vida-plus/api/internal/domain"
 )
 
 func TestAuthorizationIntegration(t *testing.T) {
@@ -26,15 +25,15 @@ func TestAuthorizationIntegration(t *testing.T) {
 	app := SetupTestApp(tc)
 
 	// Helper function to register and login a user
-	registerAndLogin := func(t *testing.T, userType models.UserType, email, password string) string {
+	registerAndLogin := func(t *testing.T, userType domain.UserType, email, password string) string {
 		t.Helper()
 
 		// Register user
-		registerReq := models.RegisterRequest{
+		registerReq := domain.RegisterRequest{
 			Email:    email,
 			Password: password,
 			Type:     userType,
-			Profile: models.UserProfile{
+			Profile: domain.UserProfile{
 				FirstName: "Test",
 				LastName:  "User",
 				Phone:     "+55-11-99999-9999",
@@ -52,7 +51,7 @@ func TestAuthorizationIntegration(t *testing.T) {
 		require.Equal(t, http.StatusCreated, rec.Code)
 
 		// Login user
-		loginReq := models.LoginRequest{
+		loginReq := domain.LoginRequest{
 			Email:    email,
 			Password: password,
 		}
@@ -67,7 +66,7 @@ func TestAuthorizationIntegration(t *testing.T) {
 		app.Echo.ServeHTTP(rec, req)
 		require.Equal(t, http.StatusOK, rec.Code)
 
-		var loginResp models.LoginResponse
+		var loginResp domain.LoginResponse
 		err = json.Unmarshal(rec.Body.Bytes(), &loginResp)
 		require.NoError(t, err)
 
@@ -78,7 +77,7 @@ func TestAuthorizationIntegration(t *testing.T) {
 		// Clean database before test
 		tc.CleanDatabase(ctx, t)
 
-		patientToken := registerAndLogin(t, models.UserTypePatient, "patient@test.com", "password123")
+		patientToken := registerAndLogin(t, domain.UserTypePatient, "patient@test.com", "password123")
 
 		t.Run("should allow patient to access basic profile", func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/v1/profile", nil)
@@ -112,7 +111,7 @@ func TestAuthorizationIntegration(t *testing.T) {
 		// Clean database before test
 		tc.CleanDatabase(ctx, t)
 
-		doctorToken := registerAndLogin(t, models.UserTypeDoctor, "doctor@test.com", "password123")
+		doctorToken := registerAndLogin(t, domain.UserTypeDoctor, "doctor@test.com", "password123")
 
 		t.Run("should allow doctor to access basic profile", func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/v1/profile", nil)
@@ -146,7 +145,7 @@ func TestAuthorizationIntegration(t *testing.T) {
 		// Clean database before test
 		tc.CleanDatabase(ctx, t)
 
-		adminToken := registerAndLogin(t, models.UserTypeAdmin, "admin@test.com", "password123")
+		adminToken := registerAndLogin(t, domain.UserTypeAdmin, "admin@test.com", "password123")
 
 		t.Run("should allow admin to access user management", func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/v1/admin/users", nil)

@@ -1,5 +1,5 @@
 // Package models contains request and response models for the API.
-package models
+package domain
 
 // RegisterRequest represents the request structure for user registration.
 type RegisterRequest struct {

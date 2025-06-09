@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
-	"github.com/vida-plus/api/models"
+	"github.com/vida-plus/api/internal/domain"
 )
 
 // AuthMiddleware checks for a valid JWT token.
@@ -18,7 +18,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 }
 
 // JWTMiddleware validates JWT from Authorization header and sets user info in context.
-func JWTMiddleware(jwtManager models.JWTManager) echo.MiddlewareFunc {
+func JWTMiddleware(jwtManager domain.JWTManager) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			header := c.Request().Header.Get("Authorization")

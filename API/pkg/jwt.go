@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/vida-plus/api/models"
+	"github.com/vida-plus/api/internal/domain"
 )
 
 // JWTManagerImpl implements JWTManager interface.
@@ -14,12 +14,12 @@ type JWTManagerImpl struct {
 	secret string
 }
 
-func NewJWTManager() models.JWTManager {
+func NewJWTManager() domain.JWTManager {
 	return &JWTManagerImpl{secret: "local-development-secret-key"} // Chave fixa para desenvolvimento local
 }
 
 // Generate generates a JWT token for a user.
-func (j *JWTManagerImpl) Generate(user *models.User) (string, error) {
+func (j *JWTManagerImpl) Generate(user *domain.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id":   user.ID,
 		"email":     user.Email,
@@ -31,7 +31,7 @@ func (j *JWTManagerImpl) Generate(user *models.User) (string, error) {
 }
 
 // Validate validates a JWT token and returns the claims.
-func (j *JWTManagerImpl) Validate(tokenStr string) (*models.AuthClaims, error) {
+func (j *JWTManagerImpl) Validate(tokenStr string) (*domain.AuthClaims, error) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
@@ -48,17 +48,17 @@ func (j *JWTManagerImpl) Validate(tokenStr string) (*models.AuthClaims, error) {
 	userID, _ := claims["user_id"].(string)
 	email, _ := claims["email"].(string)
 	userTypeStr, _ := claims["user_type"].(string)
-	userType := models.UserType(userTypeStr)
+	userType := domain.UserType(userTypeStr)
 
-	return &models.AuthClaims{
+	return &domain.AuthClaims{
 		UserID:   userID,
 		Email:    email,
 		UserType: userType,
 	}, nil
 }
 
-func (j *JWTManagerImpl) GenerateRefreshToken(user *models.User) (string, error) {
-	claims := &models.AuthClaims{
+func (j *JWTManagerImpl) GenerateRefreshToken(user *domain.User) (string, error) {
+	claims := &domain.AuthClaims{
 		UserID: user.GetID(),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)), // 7 dias
@@ -68,15 +68,15 @@ func (j *JWTManagerImpl) GenerateRefreshToken(user *models.User) (string, error)
 	return token.SignedString([]byte(j.secret))
 }
 
-func (j *JWTManagerImpl) ValidateRefreshToken(token string) (*models.AuthClaims, error) {
-	parsedToken, err := jwt.ParseWithClaims(token, &models.AuthClaims{}, func(t *jwt.Token) (interface{}, error) {
+func (j *JWTManagerImpl) ValidateRefreshToken(token string) (*domain.AuthClaims, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, &domain.AuthClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte(j.secret), nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	claims, ok := parsedToken.Claims.(*models.AuthClaims)
+	claims, ok := parsedToken.Claims.(*domain.AuthClaims)
 	if !ok || !parsedToken.Valid {
 		return nil, errors.New("invalid token")
 	}
