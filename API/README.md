@@ -1,181 +1,244 @@
-# Vida Plus API - Healthcare System with User Differentiation
+# Vida Plus API
 
-A simplified Go API with user type differentiation for healthcare systems, built with Echo framework, MongoDB, and comprehensive integration testing.
+Sistema de gestão de saúde e bem-estar desenvolvido em Go, com arquitetura limpa, autenticação JWT e diferenciação de tipos de usuário para ambientes hospitalares e clínicos.
 
-## Features
+> **⚠️ Status do Projeto**: Este projeto está em desenvolvimento ativo. Algumas configurações estão hardcoded para facilitar o desenvolvimento local.
 
-- **User Authentication**: Complete JWT-based authentication system
-- **User Type Differentiation**: Support for multiple user types (patient, doctor, nurse, admin, receptionist)
-- **Role-Based Authorization**: Middleware for role-based access control
-- **MongoDB Integration**: Repository pattern with error handling
-- **Swagger Documentation**: Auto-generated API documentation
-- **Integration Testing**: Comprehensive tests using testcontainers-go
-- **Health Check**: Database connectivity monitoring
-## Project Structure
+## 🚀 Características Principais
+
+- **🔐 Autenticação JWT**: Sistema completo de autenticação com tokens seguros
+- **👥 Tipos de Usuário**: Suporte para múltiplos perfis (paciente, médico, enfermeiro, admin, recepcionista)
+- **🛡️ Autorização por Papel**: Middleware para controle de acesso baseado em função
+- **📦 MongoDB**: Integração robusta com padrão repository
+- **📚 Documentação Swagger**: API documentada automaticamente com OpenAPI 3.0
+- **🧪 Testes de Integração**: Cobertura completa usando testcontainers-go
+- **💊 Health Check**: Monitoramento de conectividade do banco de dados
+## 📁 Estrutura do Projeto
 
 ```
 API/
-├── cmd/api/                    # Application entry point
-│   └── main.go                 # Main application with simplified routes
-├── internal/
-│   ├── auth/                   # Authentication service
-│   │   ├── service.go          # AuthService implementation
-│   │   └── service_test.go     # Unit tests
-│   ├── handlers/               # HTTP handlers
-│   │   ├── auth_handler.go     # Authentication endpoints
-│   │   ├── health_handler.go   # Health check endpoints
-│   │   ├── protected_handler.go # Protected route examples
-│   │   └── validator.go        # Request validation
-│   ├── middleware/             # Middleware components
-│   │   ├── authorization.go    # Role-based authorization
-│   │   └── jwt.go              # JWT authentication
-│   ├── repository/             # Data access layer
-│   │   └── user_repository.go  # User repository
-│   └── user/                   # User service
-│       └── service.go          # User business logic
-├── models/                     # Data models
-│   ├── auth.go                 # Authentication models
-│   ├── requests.go             # Request/response models
-│   └── user.go                 # User model with types
-├── pkg/                        # Utility packages
-│   ├── id.go                   # ID generation
-│   └── jwt.go                  # JWT utilities
-├── test/integration/           # Integration tests
-│   ├── setup.go                # Test infrastructure
-│   ├── auth_test.go            # Authentication tests
-│   ├── core_test.go            # Core functionality tests
-│   └── health_test.go          # Health check tests
-├── doc/                        # Swagger documentation
-│   ├── docs.go
-│   ├── swagger.json
-│   └── swagger.yaml
-├── mocks/                      # Test mocks
-├── docker-compose.yml          # Development environment
-├── Dockerfile                  # Container configuration
-├── go.mod                      # Go module definition
-└── go.sum                      # Go module checksums
+├── cmd/api/                    # Ponto de entrada da aplicação
+│   └── main.go                 # Aplicação principal com rotas simplificadas
+├── internal/                   # Código interno (não exportável)
+│   ├── domain/                 # Modelos de domínio e regras de negócio
+│   │   ├── auth.go             # Estruturas de autenticação
+│   │   ├── errors.go           # Definições de erros customizados
+│   │   ├── repository.go       # Interfaces de repositório
+│   │   ├── requests.go         # Modelos de requisição/resposta
+│   │   └── user.go             # Modelo de usuário
+│   ├── handler/                # Handlers HTTP
+│   │   ├── admin_handler.go    # Endpoints administrativos
+│   │   ├── auth_handler.go     # Endpoints de autenticação
+│   │   ├── health_handler.go   # Endpoints de health check
+│   │   ├── protected_handler.go # Rotas protegidas de exemplo
+│   │   └── validator.go        # Validação de requisições
+│   ├── healthcheck/            # Serviço de health check
+│   │   └── healthcheck.go      # Implementação do health check
+│   ├── middleware/             # Middlewares
+│   │   ├── authorization.go    # Autorização baseada em papel
+│   │   └── jwt.go              # Autenticação JWT
+│   ├── repository/             # Camada de acesso a dados
+│   │   └── user_repository.go  # Repositório de usuários
+│   └── service/                # Camada de serviços
+│       ├── auth_service.go     # Lógica de autenticação
+│       └── user_service.go     # Lógica de usuários
+├── mocks/                      # Mocks para testes
+│   ├── auth_service_mocks.go   # Mocks do serviço de auth
+│   ├── jwt_manager_mocks.go    # Mocks do gerenciador JWT
+│   ├── repository_mocks.go     # Mocks de repositório
+│   ├── user_repository_mocks.go # Mocks do repositório de usuários
+│   └── user_store_mocks.go     # Mocks do store de usuários
+├── pkg/                        # Pacotes utilitários (exportáveis)
+│   ├── id.go                   # Geração de IDs
+│   ├── jwt.go                  # Utilitários JWT
+│   └── database/               # Utilitários de banco
+│       └── mongodb.go          # Cliente MongoDB
+├── test/integration/           # Testes de integração
+│   ├── auth_test.go            # Testes de autenticação
+│   ├── authorization_test.go   # Testes de autorização
+│   ├── core_test.go            # Testes de funcionalidade core
+│   ├── handlers_test.go        # Testes de handlers
+│   ├── health_test.go          # Testes de health check
+│   └── setup.go                # Infraestrutura de testes
+├── doc/                        # Documentação Swagger
+│   ├── docs.go                 # Documentação gerada
+│   ├── postman-collection.json # Coleção do Postman
+│   ├── swagger-config.json     # Configuração do Swagger
+│   ├── swagger.json            # Especificação OpenAPI JSON
+│   └── swagger.yaml            # Especificação OpenAPI YAML
+├── docker-compose.yml          # Ambiente de desenvolvimento
+├── Dockerfile                  # Configuração do container
+├── Makefile                    # Comandos de automação
+├── go.mod                      # Definição do módulo Go
+└── go.sum                      # Checksums das dependências
 ```
 
-## User Types
+## 👥 Tipos de Usuário
 
-The system supports the following user types with different permission levels:
+O sistema suporta os seguintes tipos de usuário com diferentes níveis de permissão:
 
-- **Patient**: Basic user with limited access
-- **Doctor**: Medical professional with patient access
-- **Nurse**: Healthcare provider with specific permissions
-- **Admin**: System administrator with full access
-- **Receptionist**: Front desk staff with administrative tasks
+| Tipo | Descrição | Permissões |
+|------|-----------|------------|
+| **👤 Patient** | Paciente do sistema | Acesso básico, visualização do próprio perfil |
+| **👨‍⚕️ Doctor** | Médico | Acesso a pacientes, prescrições, consultas |
+| **👩‍⚕️ Nurse** | Enfermeiro(a) | Cuidados com pacientes, registros médicos |
+| **👨‍💼 Admin** | Administrador | Acesso total ao sistema, gestão de usuários |
+| **🏥 Receptionist** | Recepcionista | Agendamentos, cadastros, atendimento |
 
-## API Endpoints
+### Campos Específicos por Tipo
 
-### Authentication
-- `POST /v1/auth/register` - User registration with type
-- `POST /v1/auth/login` - User login
+- **Médicos**: CRM, especialidade
+- **Enfermeiros**: COREN, setor
+- **Pacientes**: Data de nascimento, histórico médico
+- **Funcionários**: Departamento, cargo
 
-### Protected Routes
-- `GET /v1/profile` - Get user profile (authenticated)
-- `GET /v1/protected` - Example protected endpoint
+## 🛠️ API Endpoints
 
-### Health Check
-- `GET /health` - Database connectivity status
+### 🔐 Autenticação
+- `POST /v1/auth/register` - Cadastro de usuário com tipo específico
+- `POST /v1/auth/login` - Login de usuário
 
-### Documentation
-- `GET /swagger/index.html` - Swagger UI
+### 🔒 Rotas Protegidas
+- `GET /v1/protected` - Exemplo de endpoint protegido
 
-## Quick Start
+### 👨‍💼 Administração (Admin apenas)
+- `GET /v1/admin/users` - Listar todos os usuários
+- `GET /v1/admin/stats` - Estatísticas do sistema
 
-### Using Docker Compose (Recommended)
+### 💊 Health Check
+- `GET /health` - Status de conectividade do banco de dados
+
+### 📚 Documentação
+- `GET /swagger/index.html` - Interface Swagger UI
+- `GET /swagger/doc.json` - Especificação OpenAPI JSON
+
+## 🚀 Início Rápido
+
+### 🐳 Usando Docker Compose (Recomendado)
 
 ```bash
-# Start the development environment
+# Iniciar o ambiente de desenvolvimento
 docker-compose up -d
 
-# The API will be available at http://localhost:8080
-# Swagger documentation at http://localhost:8080/swagger/index.html
+# A API estará disponível em http://localhost:8080
+# Documentação Swagger em http://localhost:8080/swagger/index.html
 ```
 
-### Manual Setup
+### 🔧 Configuração Manual
 
-1. **Install Dependencies**
+1. **Instalar Dependências**
    ```bash
    go mod tidy
    ```
 
-2. **Start MongoDB**
+2. **Iniciar MongoDB**
    ```bash
-   # Using Docker
+   # Usando Docker
    docker run -d -p 27017:27017 --name mongodb mongo:latest
    ```
 
-3. **Set Environment Variables**
-   ```bash
-   export MONGODB_URI="mongodb://localhost:27017"
-   export JWT_SECRET="your-secret-key"
-   export PORT="8080"
-   ```
-
-4. **Run the Application**
+3. **Executar a Aplicação**
    ```bash
    go run cmd/api/main.go
    ```
 
-## Testing
+4. **Verificar se está funcionando**
+   ```bash
+   curl http://localhost:8080/health
+   ```
 
-### Integration Tests
+## 🧪 Testes
 
-Run comprehensive integration tests with testcontainers:
+### Testes de Integração
 
 ```bash
+# Executar todos os testes de integração
 go test ./test/integration/... -v
+
+# Executar com cobertura
+go test ./test/integration/... -v -cover
 ```
 
-### Unit Tests
-
-Run unit tests for individual components:
+### Testes Unitários
 
 ```bash
-go test ./internal/auth/... -v
+# Todos os testes unitários
+go test ./internal/... -v
+
+# Testes de um pacote específico
+go test ./internal/service/... -v
 ```
 
-### Test Coverage
+### Cobertura de Testes
 
 ```bash
+# Cobertura geral
 go test -cover ./...
+
+# Cobertura detalhada com HTML
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out -o coverage.html
 ```
 
-## Development
+## 💻 Desenvolvimento
 
-### Generate Swagger Documentation
+### Gerar Documentação Swagger
 
 ```bash
-# Install swag
+# Instalar swag
 go install github.com/swaggo/swag/cmd/swag@latest
 
-# Generate docs
+# Gerar documentação
 swag init -g cmd/api/main.go -o doc
 ```
 
-### Build for Production
+### Build para Produção
 
 ```bash
+# Build nativo
 go build -o bin/api cmd/api/main.go
+
+# Build com Docker
+docker build -t vida-plus-api .
 ```
 
-## Usage Examples
+## 📝 Exemplos de Uso
 
-### Register a New Patient
+### Cadastrar um Novo Paciente
 
 ```bash
 curl -X POST http://localhost:8080/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "patient@example.com",
-    "password": "secure123",
-    "name": "John Doe",
+    "email": "paciente@exemplo.com",
+    "password": "senha123",
     "type": "patient",
     "profile": {
-      "dateOfBirth": "1990-01-01",
-      "phoneNumber": "+1234567890"
+      "first_name": "João",
+      "last_name": "Silva",
+      "cpf": "12345678901",
+      "phone": "+5511999999999",
+      "date_of_birth": "1990-01-01"
+    }
+  }'
+```
+
+### Cadastrar um Médico
+
+```bash
+curl -X POST http://localhost:8080/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "medico@exemplo.com",
+    "password": "senha123",
+    "type": "doctor",
+    "profile": {
+      "first_name": "Dra. Maria",
+      "last_name": "Santos",
+      "cpf": "98765432101",
+      "phone": "+5511888888888",
+      "crm": "CRM/SP 123456",
+      "speciality": "Cardiologia"
     }
   }'
 ```
@@ -186,70 +249,88 @@ curl -X POST http://localhost:8080/v1/auth/register \
 curl -X POST http://localhost:8080/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "patient@example.com",
-    "password": "secure123"
+    "email": "paciente@exemplo.com",
+    "password": "senha123"
   }'
 ```
 
-### Access Protected Route
+### Acessar Rota Protegida
 
 ```bash
-curl -X GET http://localhost:8080/v1/profile \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+curl -X GET http://localhost:8080/v1/protected \
+  -H "Authorization: Bearer SEU_TOKEN_JWT"
 ```
 
-## Environment Variables
+### Acessar Estatísticas (Admin apenas)
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017` |
-| `JWT_SECRET` | JWT signing secret | `your-secret-key` |
-| `PORT` | Server port | `8080` |
-| `DB_NAME` | Database name | `vida_plus` |
+```bash
+curl -X GET http://localhost:8080/v1/admin/stats \
+  -H "Authorization: Bearer TOKEN_DO_ADMIN"
+```
 
-## Architecture
+## 🔧 Configuração
 
-The project follows clean architecture principles:
+### Configurações Atuais (Hardcoded)
 
-- **Domain Models**: Core business entities in `models/`
-- **Repository Pattern**: Data access abstraction in `internal/repository/`
-- **Service Layer**: Business logic in `internal/auth/` and `internal/user/`
-- **Handlers**: HTTP transport layer in `internal/handlers/`
-- **Middleware**: Cross-cutting concerns in `internal/middleware/`
+| Configuração | Valor | Arquivo |
+|--------------|-------|---------|
+| **MongoDB URI** | `mongodb://localhost:27017/vida_plus` | `pkg/database/mongodb.go` |
+| **JWT Secret** | `local-development-secret-key` | `pkg/jwt.go` |
+| **Porta do Servidor** | `8080` | `cmd/api/main.go` |
+| **Nome do Banco** | `vida_plus` | `cmd/api/main.go` |
 
-## Security Features
+## 🔒 Recursos de Segurança
 
-- **JWT Authentication**: Secure token-based authentication
-- **Password Hashing**: bcrypt for secure password storage
-- **Role-Based Authorization**: Middleware for access control
-- **Input Validation**: Request validation using go-playground/validator
+- **🔐 Autenticação JWT**: Tokens seguros com tempo de expiração de 24 horas
+- **🛡️ Hash de Senhas**: bcrypt para armazenamento seguro de senhas
+- **👮 Autorização por Papel**: Middleware para controle de acesso baseado em função
+- **✅ Validação de Entrada**: Validação rigorosa usando go-playground/validator
 
-## Future Expansion
+## 🛠️ Tecnologias Utilizadas
 
-The system is designed for easy expansion. To add role-specific functionality:
+| Tecnologia | Descrição |
+|------------|-----------|
+| **🐹 Go** | Linguagem principal do backend |
+| **⚡ Echo** | Framework HTTP de alta performance |
+| **🍃 MongoDB** | Banco de dados NoSQL |
+| **🔑 JWT** | Autenticação baseada em tokens |
+| **🔐 bcrypt** | Hash seguro de senhas |
+| **🧪 Testify** | Framework de testes |
+| **🐳 Testcontainers** | Testes de integração com containers |
+| **📚 Swagger** | Documentação automática da API |
 
-1. Create new handlers in `internal/handlers/`
-2. Add role-specific routes in `cmd/api/main.go`
-3. Use existing authorization middleware for access control
-4. Add integration tests in `test/integration/`
+## 🔧 Solução de Problemas
 
-## Contributing
+**❌ Erro de Conexão com MongoDB**
+```bash
+# Verificar se o MongoDB está rodando
+docker ps | grep mongo
 
-1. Follow the existing code structure and patterns
-2. Add integration tests for new features
-3. Update Swagger documentation
-4. Follow Go best practices and the Uber Go Style Guide
+# Reiniciar o container
+docker-compose restart mongodb
+```
 
-## Technologies Used
+**❌ Token JWT Inválido**
+```bash
+# Fazer login novamente para obter novo token
+curl -X POST http://localhost:8080/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password"}'
+```
 
-- **Framework**: Echo v4 - High performance HTTP framework
-- **Database**: MongoDB - Document database with Go driver
-- **Authentication**: JWT tokens with bcrypt password hashing
-- **Documentation**: Swagger/OpenAPI 3.0 with auto-generation
-- **Testing**: Testcontainers-go for integration testing
-- **Validation**: go-playground/validator for request validation
-- **Containerization**: Docker and Docker Compose
+**❌ Porta já em uso**
+```bash
+# Verificar o que está usando a porta 8080
+lsof -i :8080
+```
 
-## License
+## 📄 Licença
 
-This project is part of the Vida Plus healthcare system.
+Este projeto faz parte do sistema Vida Plus de gestão de saúde e bem-estar.
+
+---
+
+<div align="center">
+  <h3>🏥 Vida Plus API</h3>
+  <p><em>Sistema de gestão de saúde e bem-estar desenvolvido com ❤️ em Go</em></p>
+</div>
