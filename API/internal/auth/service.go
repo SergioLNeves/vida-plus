@@ -143,3 +143,40 @@ func (a *AuthServiceImpl) Login(ctx context.Context, email, password string) (st
 	logger.Info("user logged in successfully", slog.String("userID", user.ID))
 	return token, nil
 }
+
+func (a *AuthServiceImpl) GenerateRefreshToken(ctx context.Context, user *models.User) (string, error) {
+	logger := slog.With(
+		slog.String("service", "AuthService"),
+		slog.String("method", "GenerateRefreshToken"),
+		slog.String("userID", user.GetID()),
+	)
+
+	refreshToken, err := a.jwt.GenerateRefreshToken(user)
+	if err != nil {
+		logger.Error("error generating refresh token", slog.Any("error", err))
+		return "", models.NewInternalError("error generating refresh token")
+	}
+
+	return refreshToken, nil
+}
+
+func (a *AuthServiceImpl) ValidateRefreshToken(ctx context.Context, token string) (*models.User, error) {
+	logger := slog.With(
+		slog.String("service", "AuthService"),
+		slog.String("method", "ValidateRefreshToken"),
+	)
+
+	claims, err := a.jwt.ValidateRefreshToken(token)
+	if err != nil {
+		logger.Error("error validating refresh token", slog.Any("error", err))
+		return nil, models.NewUnauthorizedError("invalid refresh token")
+	}
+
+	user, err := a.userStore.GetByID(ctx, claims.UserID)
+	if err != nil {
+		logger.Error("error fetching user by ID", slog.Any("error", err))
+		return nil, models.NewInternalError("error fetching user")
+	}
+
+	return user, nil
+}

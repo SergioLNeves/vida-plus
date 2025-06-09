@@ -56,3 +56,30 @@ func (j *JWTManagerImpl) Validate(tokenStr string) (*models.AuthClaims, error) {
 		UserType: userType,
 	}, nil
 }
+
+func (j *JWTManagerImpl) GenerateRefreshToken(user *models.User) (string, error) {
+	claims := &models.AuthClaims{
+		UserID: user.GetID(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)), // 7 dias
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(j.secret))
+}
+
+func (j *JWTManagerImpl) ValidateRefreshToken(token string) (*models.AuthClaims, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, &models.AuthClaims{}, func(t *jwt.Token) (interface{}, error) {
+		return []byte(j.secret), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := parsedToken.Claims.(*models.AuthClaims)
+	if !ok || !parsedToken.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	return claims, nil
+}

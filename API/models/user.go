@@ -80,8 +80,14 @@ func (u *User) GetFullName() string {
 	return u.Profile.FirstName + " " + u.Profile.LastName
 }
 
+// GetID returns the ID of the user
+func (u *User) GetID() string {
+	return u.ID
+}
+
 // UserStore defines user management methods.
 type UserStore interface {
 	GetByEmail(ctx context.Context, email string) (*User, error)
+	GetByID(ctx context.Context, id string) (*User, error)
 	Create(ctx context.Context, user *User) error
 }

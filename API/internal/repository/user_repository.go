@@ -62,3 +62,48 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 	logger.Info("user found successfully")
 	return &user, nil
 }
+
+func (r *UserRepository) GetByID(ctx context.Context, id string) (*models.User, error) {
+	logger := slog.With(
+		slog.String("repository", "UserRepository"),
+		slog.String("method", "GetByID"),
+		slog.String("userID", id),
+	)
+
+	var user models.User
+	err := r.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			logger.Info("user not found")
+			return nil, nil
+		}
+		logger.Error("failed to get user by ID", slog.Any("error", err))
+		return nil, models.NewInternalError("failed to get user by ID")
+	}
+
+	logger.Info("user found successfully")
+	return &user, nil
+}
+
+func (r *UserRepository) GetAllUsers(ctx context.Context) ([]*models.User, error) {
+	logger := slog.With(
+		slog.String("repository", "UserRepository"),
+		slog.String("method", "GetAllUsers"),
+	)
+
+	cursor, err := r.collection.Find(ctx, bson.M{})
+	if err != nil {
+		logger.Error("failed to find users", slog.Any("error", err))
+		return nil, models.NewInternalError("failed to find users")
+	}
+	defer cursor.Close(ctx)
+
+	var users []*models.User
+	if err = cursor.All(ctx, &users); err != nil {
+		logger.Error("failed to decode users", slog.Any("error", err))
+		return nil, models.NewInternalError("failed to decode users")
+	}
+
+	logger.Info("users retrieved successfully", slog.Int("count", len(users)))
+	return users, nil
+}

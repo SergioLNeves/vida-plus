@@ -9,11 +9,15 @@ import (
 )
 
 // AdminHandler handles admin-specific endpoints
-type AdminHandler struct{}
+type AdminHandler struct {
+	userRepo models.UserRepository
+}
 
 // NewAdminHandler creates a new instance of AdminHandler
-func NewAdminHandler() *AdminHandler {
-	return &AdminHandler{}
+func NewAdminHandler(userRepo models.UserRepository) *AdminHandler {
+	return &AdminHandler{
+		userRepo: userRepo,
+	}
 }
 
 // GetAllUsers godoc
@@ -38,39 +42,25 @@ func (h *AdminHandler) GetAllUsers(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, models.NewAPIError(http.StatusUnauthorized, err.Error()))
 	}
 
-	// Simulação de lista de todos os usuários
-	users := map[string]interface{}{
-		"admin_id": claims.UserID,
-		"users": []map[string]interface{}{
-			{
-				"id":         "user1",
-				"email":      "joao@example.com",
-				"type":       "patient",
-				"status":     "active",
-				"created_at": "2024-01-01",
-			},
-			{
-				"id":         "user2",
-				"email":      "dr.silva@example.com",
-				"type":       "doctor",
-				"status":     "active",
-				"created_at": "2024-01-02",
-			},
-			{
-				"id":         "user3",
-				"email":      "nurse@example.com",
-				"type":       "nurse",
-				"status":     "active",
-				"created_at": "2024-01-03",
-			},
-		},
+	// Busca real de usuários do banco de dados
+	users, err := h.userRepo.GetAllUsers(c.Request().Context())
+	if err != nil {
+		logger.Error("failed to get all users", slog.Any("error", err))
+		return c.JSON(http.StatusInternalServerError, models.NewAPIError(http.StatusInternalServerError, "failed to retrieve users"))
+	}
+
+	response := map[string]interface{}{
+		"admin_id":    claims.UserID,
+		"users":       users,
+		"total_count": len(users),
 	}
 
 	logger.Info("admin accessed all users",
 		slog.String("adminID", claims.UserID),
+		slog.Int("userCount", len(users)),
 	)
 
-	return c.JSON(http.StatusOK, users)
+	return c.JSON(http.StatusOK, response)
 }
 
 // GetSystemStats godoc
@@ -84,24 +74,50 @@ func (h *AdminHandler) GetAllUsers(c echo.Context) error {
 // @Failure 403 {object} models.APIError "Forbidden"
 // @Router /admin/stats [get]
 func (h *AdminHandler) GetSystemStats(c echo.Context) error {
+	logger := slog.With(
+		slog.String("handler", "AdminHandler"),
+		slog.String("func", "GetSystemStats"),
+	)
+
 	claims, err := models.GetAuthClaims(c.Get("claims"))
 	if err != nil {
+		logger.Error("missing or invalid claims", slog.Any("error", err))
 		return c.JSON(http.StatusUnauthorized, models.NewAPIError(http.StatusUnauthorized, err.Error()))
 	}
 
-	// Simulação de estatísticas do sistema
-	stats := map[string]interface{}{
-		"total_users":        150,
-		"total_patients":     120,
-		"total_doctors":      15,
-		"total_nurses":       10,
-		"total_appointments": 500,
-		"active_sessions":    25,
-		"system_status":      "healthy",
+	// Get all users to calculate statistics
+	users, err := h.userRepo.GetAllUsers(c.Request().Context())
+	if err != nil {
+		logger.Error("failed to get all users for stats", slog.Any("error", err))
+		return c.JSON(http.StatusInternalServerError, models.NewAPIError(http.StatusInternalServerError, "failed to retrieve user statistics"))
 	}
 
-	slog.Info("admin accessed system stats",
+	// Count users by type
+	userCounts := map[models.UserType]int{
+		models.UserTypePatient:      0,
+		models.UserTypeDoctor:       0,
+		models.UserTypeNurse:        0,
+		models.UserTypeAdmin:        0,
+		models.UserTypeReceptionist: 0,
+	}
+
+	for _, user := range users {
+		userCounts[user.Type]++
+	}
+
+	stats := map[string]interface{}{
+		"admin_id":            claims.UserID,
+		"total_users":         len(users),
+		"total_patients":      userCounts[models.UserTypePatient],
+		"total_doctors":       userCounts[models.UserTypeDoctor],
+		"total_nurses":        userCounts[models.UserTypeNurse],
+		"total_admins":        userCounts[models.UserTypeAdmin],
+		"total_receptionists": userCounts[models.UserTypeReceptionist],
+	}
+
+	logger.Info("admin accessed system stats",
 		slog.String("adminID", claims.UserID),
+		slog.Int("totalUsers", len(users)),
 	)
 
 	return c.JSON(http.StatusOK, stats)

@@ -132,7 +132,7 @@ func SetupTestApp(tc *TestContainer) *TestApp {
 	e := echo.New()
 
 	// Configure routes
-	setupTestRoutes(e, jwtManager, authHandler, protectedHandler, healthHandler)
+	setupTestRoutes(e, jwtManager, userRepo, authHandler, protectedHandler, healthHandler)
 
 	return &TestApp{
 		Echo:             e,
@@ -146,7 +146,7 @@ func SetupTestApp(tc *TestContainer) *TestApp {
 }
 
 // setupTestRoutes configures all routes for testing
-func setupTestRoutes(e *echo.Echo, jwtManager models.JWTManager, authHandler *handlers.AuthHandler,
+func setupTestRoutes(e *echo.Echo, jwtManager models.JWTManager, userRepo models.UserRepository, authHandler *handlers.AuthHandler,
 	protectedHandler *handlers.ProtectedHandler, healthHandler *handlers.HealthHandler) {
 
 	// Health check
@@ -175,6 +175,12 @@ func setupTestRoutes(e *echo.Echo, jwtManager models.JWTManager, authHandler *ha
 			"message": "Perfil do usuário - acesso baseado no tipo: " + string(claims.UserType),
 		})
 	})
+
+	// Admin routes (require Admin role) - using real AdminHandler
+	adminHandler := handlers.NewAdminHandler(userRepo)
+	adminGroup := protected.Group("/admin", middleware.RequireRole(models.UserTypeAdmin))
+	adminGroup.GET("/users", adminHandler.GetAllUsers)
+	adminGroup.GET("/stats", adminHandler.GetSystemStats)
 }
 
 // CleanDatabase removes all data from test database

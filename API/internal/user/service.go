@@ -55,3 +55,20 @@ func (u *UserServiceImpl) Create(ctx context.Context, user *models.User) error {
 	logger.Info("user created successfully")
 	return nil
 }
+
+func (u *UserServiceImpl) GetByID(ctx context.Context, id string) (*models.User, error) {
+	logger := slog.With(
+		slog.String("service", "UserService"),
+		slog.String("method", "GetByID"),
+		slog.String("userID", id),
+	)
+
+	user, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		logger.Error("failed to get user by ID", slog.Any("error", err))
+		return nil, models.NewInternalError("failed to get user by ID")
+	}
+
+	logger.Info("user found successfully")
+	return user, nil
+}

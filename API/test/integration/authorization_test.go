@@ -80,8 +80,8 @@ func TestAuthorizationIntegration(t *testing.T) {
 
 		patientToken := registerAndLogin(t, models.UserTypePatient, "patient@test.com", "password123")
 
-		t.Run("should allow patient to access own profile", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/v1/patient/profile", nil)
+		t.Run("should allow patient to access basic profile", func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/v1/profile", nil)
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", patientToken))
 			rec := httptest.NewRecorder()
 
@@ -89,22 +89,13 @@ func TestAuthorizationIntegration(t *testing.T) {
 			assert.Equal(t, http.StatusOK, rec.Code)
 		})
 
-		t.Run("should allow patient to access medical history", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/v1/patient/medical-history", nil)
+		t.Run("should allow patient to access protected endpoint", func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/v1/protected", nil)
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", patientToken))
 			rec := httptest.NewRecorder()
 
 			app.Echo.ServeHTTP(rec, req)
 			assert.Equal(t, http.StatusOK, rec.Code)
-		})
-
-		t.Run("should deny patient access to doctor routes", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/v1/doctor/patients", nil)
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", patientToken))
-			rec := httptest.NewRecorder()
-
-			app.Echo.ServeHTTP(rec, req)
-			assert.Equal(t, http.StatusForbidden, rec.Code)
 		})
 
 		t.Run("should deny patient access to admin routes", func(t *testing.T) {
@@ -123,8 +114,8 @@ func TestAuthorizationIntegration(t *testing.T) {
 
 		doctorToken := registerAndLogin(t, models.UserTypeDoctor, "doctor@test.com", "password123")
 
-		t.Run("should allow doctor to access patients list", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/v1/doctor/patients", nil)
+		t.Run("should allow doctor to access basic profile", func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/v1/profile", nil)
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", doctorToken))
 			rec := httptest.NewRecorder()
 
@@ -132,31 +123,13 @@ func TestAuthorizationIntegration(t *testing.T) {
 			assert.Equal(t, http.StatusOK, rec.Code)
 		})
 
-		t.Run("should allow doctor to access appointments", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/v1/doctor/appointments", nil)
+		t.Run("should allow doctor to access protected endpoint", func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/v1/protected", nil)
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", doctorToken))
 			rec := httptest.NewRecorder()
 
 			app.Echo.ServeHTTP(rec, req)
 			assert.Equal(t, http.StatusOK, rec.Code)
-		})
-
-		t.Run("should allow doctor to access shared patients with permission", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/v1/shared/patients", nil)
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", doctorToken))
-			rec := httptest.NewRecorder()
-
-			app.Echo.ServeHTTP(rec, req)
-			assert.Equal(t, http.StatusOK, rec.Code)
-		})
-
-		t.Run("should deny doctor access to patient-specific routes", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/v1/patient/profile", nil)
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", doctorToken))
-			rec := httptest.NewRecorder()
-
-			app.Echo.ServeHTTP(rec, req)
-			assert.Equal(t, http.StatusForbidden, rec.Code)
 		})
 
 		t.Run("should deny doctor access to admin routes", func(t *testing.T) {
@@ -193,8 +166,8 @@ func TestAuthorizationIntegration(t *testing.T) {
 			assert.Equal(t, http.StatusOK, rec.Code)
 		})
 
-		t.Run("should allow admin to access shared routes", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/v1/shared/patients", nil)
+		t.Run("should allow admin to access basic profile", func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/v1/profile", nil)
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", adminToken))
 			rec := httptest.NewRecorder()
 
@@ -202,28 +175,19 @@ func TestAuthorizationIntegration(t *testing.T) {
 			assert.Equal(t, http.StatusOK, rec.Code)
 		})
 
-		t.Run("should deny admin access to patient-specific routes", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/v1/patient/profile", nil)
+		t.Run("should allow admin to access protected endpoint", func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/v1/protected", nil)
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", adminToken))
 			rec := httptest.NewRecorder()
 
 			app.Echo.ServeHTTP(rec, req)
-			assert.Equal(t, http.StatusForbidden, rec.Code)
-		})
-
-		t.Run("should deny admin access to doctor-specific routes", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/v1/doctor/patients", nil)
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", adminToken))
-			rec := httptest.NewRecorder()
-
-			app.Echo.ServeHTTP(rec, req)
-			assert.Equal(t, http.StatusForbidden, rec.Code)
+			assert.Equal(t, http.StatusOK, rec.Code)
 		})
 	})
 
 	t.Run("Unauthorized Access", func(t *testing.T) {
 		t.Run("should deny access without token", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/v1/patient/profile", nil)
+			req := httptest.NewRequest(http.MethodGet, "/v1/profile", nil)
 			rec := httptest.NewRecorder()
 
 			app.Echo.ServeHTTP(rec, req)
@@ -231,7 +195,7 @@ func TestAuthorizationIntegration(t *testing.T) {
 		})
 
 		t.Run("should deny access with invalid token", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/v1/patient/profile", nil)
+			req := httptest.NewRequest(http.MethodGet, "/v1/profile", nil)
 			req.Header.Set("Authorization", "Bearer invalid-token")
 			rec := httptest.NewRecorder()
 

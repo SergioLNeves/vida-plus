@@ -71,3 +71,27 @@ func RequireAdmin() echo.MiddlewareFunc {
 func RequireMedicalStaff() echo.MiddlewareFunc {
 	return RequireUserType(models.UserTypeDoctor, models.UserTypeNurse)
 }
+
+// RequireRole creates a middleware that checks if user has the required role
+func RequireRole(requiredRole models.UserType) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			claims, err := models.GetAuthClaims(c.Get("claims"))
+			if err != nil {
+				return c.JSON(http.StatusUnauthorized, models.NewAPIError(
+					http.StatusUnauthorized,
+					"authentication required",
+				))
+			}
+
+			if claims.UserType != requiredRole {
+				return c.JSON(http.StatusForbidden, models.NewAPIError(
+					http.StatusForbidden,
+					"insufficient role permissions",
+				))
+			}
+
+			return next(c)
+		}
+	}
+}

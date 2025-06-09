@@ -60,6 +60,7 @@ func main() {
 	// Configure routes
 	configureAuthRoutes(e, jwtManager, userRepo)
 	configureProtectedRoutes(e, jwtManager)
+	configureAdminRoutes(e, jwtManager, userRepo)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
@@ -96,4 +97,16 @@ func configureProtectedRoutes(e *echo.Echo, jwtManager models.JWTManager) {
 			"message": "Perfil do usuário - acesso baseado no tipo: " + string(claims.UserType),
 		})
 	})
+}
+
+func configureAdminRoutes(e *echo.Echo, jwtManager models.JWTManager, userRepo models.UserRepository) {
+	adminHandler := handlers.NewAdminHandler(userRepo)
+
+	// Configuração das rotas de admin (protegidas)
+	v1 := e.Group("/v1", middleware.JWTMiddleware(jwtManager))
+
+	// Rotas específicas para admin
+	adminGroup := v1.Group("/admin", middleware.RequireRole(models.UserTypeAdmin))
+	adminGroup.GET("/users", adminHandler.GetAllUsers)
+	adminGroup.GET("/stats", adminHandler.GetSystemStats)
 }
