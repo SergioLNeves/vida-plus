@@ -1,0 +1,28 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Vida Plus API",
+        "description": "API completa para o sistema Vida Plus - gestão de saúde e bem-estar",
+        "version": "1.0.0",
+        "contact": {
+            "name": "Vida Plus Support",
+            "url": "http://www.vidaplus.com/support",
+            "email": "support@vidaplus.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        }
+    },
+    "host": "localhost:8080",
+    "basePath": "/v1",
+    "schemes": [
+        "http"
+    ],
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ]
+}

@@ -3,8 +3,10 @@ package models
 
 // RegisterRequest represents the request structure for user registration.
 type RegisterRequest struct {
-	Email    string `json:"email" validate:"required,email" example:"user@example.com"`
-	Password string `json:"password" validate:"required,min=8,max=128" example:"mypassword123"`
+	Email    string      `json:"email" validate:"required,email" example:"user@example.com"`
+	Password string      `json:"password" validate:"required,min=8,max=128" example:"mypassword123"`
+	Type     UserType    `json:"type" validate:"required" example:"patient"`
+	Profile  UserProfile `json:"profile" validate:"required"`
 }
 
 // LoginRequest represents the request structure for user login.
@@ -15,8 +17,10 @@ type LoginRequest struct {
 
 // RegisterResponse represents the response structure for user registration.
 type RegisterResponse struct {
-	ID    string `json:"id" example:"user123"`
-	Email string `json:"email" example:"user@example.com"`
+	ID      string      `json:"id" example:"user123"`
+	Email   string      `json:"email" example:"user@example.com"`
+	Type    UserType    `json:"type" example:"patient"`
+	Profile UserProfile `json:"profile"`
 }
 
 // LoginResponse represents the response structure for user login.

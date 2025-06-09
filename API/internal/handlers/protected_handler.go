@@ -18,6 +18,16 @@ func NewProtectedHandler() *ProtectedHandler {
 }
 
 // GetProtectedInfo handles requests to protected endpoints.
+// GetProtectedInfo godoc
+// @Summary Get protected information
+// @Description Get protected information that requires authentication
+// @Tags protected
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]string "Protected information"
+// @Failure 401 {object} models.APIError "Unauthorized"
+// @Failure 500 {object} models.APIError "Internal server error"
+// @Router /protected [get]
 func (h *ProtectedHandler) GetProtectedInfo(c echo.Context) error {
 	logger := slog.With(
 		slog.String("handler", "ProtectedHandler"),

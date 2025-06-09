@@ -14,16 +14,17 @@ type JWTManagerImpl struct {
 	secret string
 }
 
-func NewJWTManager(secret string) models.JWTManager {
-	return &JWTManagerImpl{secret: secret}
+func NewJWTManager() models.JWTManager {
+	return &JWTManagerImpl{secret: "local-development-secret-key"} // Chave fixa para desenvolvimento local
 }
 
 // Generate generates a JWT token for a user.
 func (j *JWTManagerImpl) Generate(user *models.User) (string, error) {
 	claims := jwt.MapClaims{
-		"user_id": user.ID,
-		"email":   user.Email,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+		"user_id":   user.ID,
+		"email":     user.Email,
+		"user_type": user.Type,
+		"exp":       time.Now().Add(24 * time.Hour).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(j.secret))
@@ -46,5 +47,12 @@ func (j *JWTManagerImpl) Validate(tokenStr string) (*models.AuthClaims, error) {
 	}
 	userID, _ := claims["user_id"].(string)
 	email, _ := claims["email"].(string)
-	return &models.AuthClaims{UserID: userID, Email: email}, nil
+	userTypeStr, _ := claims["user_type"].(string)
+	userType := models.UserType(userTypeStr)
+
+	return &models.AuthClaims{
+		UserID:   userID,
+		Email:    email,
+		UserType: userType,
+	}, nil
 }

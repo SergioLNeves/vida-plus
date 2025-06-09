@@ -10,8 +10,9 @@ var ErrUnauthorized = errors.New("unauthorized access")
 
 // AuthClaims represents JWT claims for authentication.
 type AuthClaims struct {
-	UserID string
-	Email  string
+	UserID   string   `json:"user_id"`
+	Email    string   `json:"email"`
+	UserType UserType `json:"user_type"`
 }
 
 // GetAuthClaims extracts JWT claims from echo.Context
@@ -31,6 +32,7 @@ func GetAuthClaims(claims interface{}) (*AuthClaims, error) {
 // AuthService defines authentication methods.
 type AuthService interface {
 	Register(ctx context.Context, email, password string) (*User, error)
+	RegisterWithProfile(ctx context.Context, req RegisterRequest) (*User, error)
 	Login(ctx context.Context, email, password string) (token string, err error)
 }
 

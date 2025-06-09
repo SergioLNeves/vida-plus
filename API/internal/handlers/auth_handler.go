@@ -21,12 +21,24 @@ func NewAuthHandler(authService models.AuthService) *AuthHandler {
 	}
 }
 
+// Register godoc
+// @Summary Register a new user
+// @Description Register a new user with email, password, type and profile
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @Param request body models.RegisterRequest true "User registration data"
+// @Success 201 {object} models.RegisterResponse "User registered successfully"
+// @Failure 400 {object} models.APIError "Bad request"
+// @Failure 409 {object} models.APIError "User already exists"
+// @Failure 500 {object} models.APIError "Internal server error"
+// @Router /auth/register [post]
 func (h *AuthHandler) Register(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	logger := slog.With(
-		slog.String("handler", "VoteHandler"),
-		slog.String("func", "GetVoteByPollId"),
+		slog.String("handler", "AuthHandler"),
+		slog.String("func", "Register"),
 	)
 	var req models.RegisterRequest
 
@@ -40,7 +52,7 @@ func (h *AuthHandler) Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, models.NewAPIError(http.StatusBadRequest, err.Error()))
 	}
 
-	user, err := h.AuthService.Register(ctx, req.Email, req.Password)
+	user, err := h.AuthService.RegisterWithProfile(ctx, req)
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			logger.Error("user already exists", slog.Any("error", err))
@@ -51,17 +63,31 @@ func (h *AuthHandler) Register(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, models.RegisterResponse{
-		ID:    user.ID,
-		Email: user.Email,
+		ID:      user.ID,
+		Email:   user.Email,
+		Type:    user.Type,
+		Profile: user.Profile,
 	})
 }
 
+// Login godoc
+// @Summary Login user
+// @Description Authenticate user and return JWT token
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @Param request body models.LoginRequest true "User login credentials"
+// @Success 200 {object} models.LoginResponse "Login successful"
+// @Failure 400 {object} models.APIError "Bad request"
+// @Failure 401 {object} models.APIError "Invalid credentials"
+// @Failure 500 {object} models.APIError "Internal server error"
+// @Router /auth/login [post]
 func (h *AuthHandler) Login(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	logger := slog.With(
-		slog.String("handler", "VoteHandler"),
-		slog.String("func", "GetVoteByPollId"),
+		slog.String("handler", "AuthHandler"),
+		slog.String("func", "Login"),
 	)
 
 	var req models.LoginRequest

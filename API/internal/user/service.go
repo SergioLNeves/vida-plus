@@ -10,11 +10,11 @@ import (
 
 // UserServiceImpl implements UserStore interface.
 type UserServiceImpl struct {
-	users map[string]*models.User
+	repo models.UserRepository
 }
 
-func NewUserService() models.UserStore {
-	return &UserServiceImpl{users: make(map[string]*models.User)}
+func NewUserService(repo models.UserRepository) models.UserStore {
+	return &UserServiceImpl{repo: repo}
 }
 
 func (u *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*models.User, error) {
@@ -24,13 +24,18 @@ func (u *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*models
 		slog.String("email", email),
 	)
 
-	user, ok := u.users[email]
-	if !ok {
+	user, err := u.repo.GetUserByEmail(ctx, email)
+	if err != nil {
+		logger.Error("failed to get user by email", slog.Any("error", err))
+		return nil, err
+	}
+
+	if user == nil {
 		logger.Info("user not found")
 		return nil, nil
 	}
 
-	logger.Info("user found", slog.String("userID", user.ID))
+	logger.Info("user found successfully", slog.String("userID", user.ID))
 	return user, nil
 }
 
@@ -42,12 +47,11 @@ func (u *UserServiceImpl) Create(ctx context.Context, user *models.User) error {
 		slog.String("userID", user.ID),
 	)
 
-	if _, exists := u.users[user.Email]; exists {
-		logger.Error("attempt to create duplicate user")
-		return models.NewConflictError("user already exists")
+	if err := u.repo.CreateUser(ctx, user); err != nil {
+		logger.Error("failed to create user", slog.Any("error", err))
+		return err
 	}
 
-	u.users[user.Email] = user
 	logger.Info("user created successfully")
 	return nil
 }

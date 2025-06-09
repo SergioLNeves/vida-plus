@@ -4,6 +4,7 @@ package auth
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -47,9 +48,13 @@ func (a *AuthServiceImpl) Register(ctx context.Context, email, password string) 
 	}
 
 	user := &models.User{
-		ID:       pkg.GenerateID(),
-		Email:    email,
-		Password: string(hashedPassword),
+		ID:        pkg.GenerateID(),
+		Email:     email,
+		Password:  string(hashedPassword),
+		Type:      models.UserTypePatient, // Default to patient
+		Status:    models.UserStatusActive,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	if err := a.userStore.Create(ctx, user); err != nil {
@@ -58,6 +63,52 @@ func (a *AuthServiceImpl) Register(ctx context.Context, email, password string) 
 	}
 
 	logger.Info("user registered successfully", slog.String("userID", user.ID))
+	return user, nil
+}
+
+func (a *AuthServiceImpl) RegisterWithProfile(ctx context.Context, req models.RegisterRequest) (*models.User, error) {
+	logger := slog.With(
+		slog.String("service", "AuthService"),
+		slog.String("method", "RegisterWithProfile"),
+		slog.String("email", req.Email),
+		slog.String("type", string(req.Type)),
+	)
+
+	// Check if user already exists
+	existingUser, err := a.userStore.GetByEmail(ctx, req.Email)
+	if err != nil {
+		logger.Error("error checking existing user", slog.Any("error", err))
+		return nil, models.NewInternalError("error checking user existence")
+	}
+	if existingUser != nil {
+		logger.Info("attempt to register existing user")
+		return nil, models.NewConflictError("user already exists")
+	}
+
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		logger.Error("error hashing password", slog.Any("error", err))
+		return nil, models.NewInternalError("error processing password")
+	}
+
+	user := &models.User{
+		ID:        pkg.GenerateID(),
+		Email:     req.Email,
+		Password:  string(hashedPassword),
+		Type:      req.Type,
+		Status:    models.UserStatusActive,
+		Profile:   req.Profile,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := a.userStore.Create(ctx, user); err != nil {
+		logger.Error("error creating user", slog.Any("error", err))
+		return nil, models.NewInternalError("error creating user")
+	}
+
+	logger.Info("user registered successfully", slog.String("userID", user.ID), slog.String("type", string(user.Type)))
 	return user, nil
 }
 
